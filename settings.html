@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>CRM Pro — Настройки</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .settings-section {
+            background: var(--bg-toolbar);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            padding: 20px 24px;
+            margin-bottom: 20px;
+        }
+        .settings-section h3 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+        }
+        .settings-section h3 i {
+            color: var(--btn-primary);
+        }
+        .settings-section .desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+        .settings-row .label {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        .settings-row .label small {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        .settings-row .value {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: var(--border-medium);
+            border-radius: 26px;
+            transition: var(--transition);
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--btn-primary);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(22px);
+        }
+
+        .setting-input {
+            padding: 8px 14px;
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: var(--bg-app);
+            color: var(--text-primary);
+            width: 220px;
+            transition: border var(--transition);
+        }
+        .setting-input:focus {
+            border-color: var(--btn-primary);
+            outline: none;
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+            font-size: 14px;
+        }
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .btn-icon.danger:hover {
+            background: var(--status-lost-bg);
+            color: var(--status-lost-color);
+        }
+
+        .color-preview {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .color-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--border-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .color-dot:hover {
+            transform: scale(1.1);
+        }
+        .color-dot.active {
+            border-color: var(--btn-primary);
+            box-shadow: 0 0 0 2px var(--btn-primary);
+        }
+
+        .danger-zone {
+            border-color: var(--status-lost-color);
+            background: var(--status-lost-bg);
+        }
+        .danger-zone h3 i {
+            color: var(--status-lost-color);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 12px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .json-preview {
+            background: var(--bg-app);
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .settings-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .settings-row .value {
+                width: 100%;
+                justify-content: flex-start;
+            }
+            .setting-input {
+                width: 100%;
+            }
+            .settings-section {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- ===== НАВИГАЦИЯ ===== -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <div class="logo-icon"><i class="fas fa-handshake"></i></div>
+                <span>Pro<span>CRM</span></span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html"><i class="fas fa-chart-pie"></i> <span>Дашборд</span></a>
+                <a href="clients.html"><i class="fas fa-users"></i> <span>Клиенты</span></a>
+                <a href="import.html"><i class="fas fa-file-import"></i> <span>Импорт</span></a>
+                <a href="settings.html" class="active"><i class="fas fa-cog"></i> <span>Настройки</span></a>
+            </div>
+            <div class="nav-right">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <span class="badge">v2.0</span>
+            </div>
+        </nav>
+
+        <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
+        <div class="main">
+            <div class="page-header">
+                <h1><i class="fas fa-cog"></i> Настройки</h1>
+                <p>Управление параметрами системы</p>
+            </div>
+
+            <div class="settings-container">
+                <!-- ===== ОБЩИЕ НАСТРОЙКИ ===== -->
+                <div class="settings-section">
+                    <h3><i class="fas fa-sliders-h"></i> Общие настройки</h3>
+                    <div class="desc">Настройки отображения и поведения системы</div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Тёмная тема
+                            <small>Автоматически переключать тему по времени суток</small>
+                        </span>
+                        <div class="value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoTheme">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Закрепить избранные
+                            <small>Всегда показывать избранные записи в начале списка</small>
+                        </span>
+                        <div class="value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="pinFavorites" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Показывать заметки
+                            <small>Отображать заметки в таблице клиентов</small>
+                        </span>
+                        <div class="value">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="showNotes" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Записей на странице
+                            <small>Количество клиентов на одной странице</small>
+                        </span>
+                        <div class="value">
+                            <select id="defaultPerPage" class="setting-input" style="width:auto;">
+                                <option value="10">10</option>
+                                <option value="15" selected>15</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== ЦВЕТОВАЯ СХЕМА ===== -->
+                <div class="settings-section">
+                    <h3><i class="fas fa-palette"></i> Цветовая схема</h3>
+                    <div class="desc">Выберите основной цвет интерфейса</div>
+
+                    <div class="settings-row">
+                        <span class="label">Основной цвет</span>
+                        <div class="value">
+                            <div class="color-preview">
+                                <span class="color-dot active" style="background:#2d3b8f;" data-color="#2d3b8f" onclick="selectColor(this)"></span>
+                                <span class="color-dot" style="background:#7c3aed;" data-color="#7c3aed" onclick="selectColor(this)"></span>
+                                <span class="color-dot" style="background:#0891b2;" data-color="#0891b2" onclick="selectColor(this)"></span>
+                                <span class="color-dot" style="background:#059669;" data-color="#059669" onclick="selectColor(this)"></span>
+                                <span class="color-dot" style="background:#d97706;" data-color="#d97706" onclick="selectColor(this)"></span>
+                                <span class="color-dot" style="background:#dc2626;" data-color="#dc2626" onclick="selectColor(this)"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== JSONBIN НАСТРОЙКИ ===== -->
+                <div class="settings-section">
+                    <h3><i class="fas fa-database"></i> JSONBin настройки</h3>
+                    <div class="desc">Настройки подключения к хранилищу данных</div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Статус подключения
+                            <small>Проверка связи с JSONBin</small>
+                        </span>
+                        <div class="value">
+                            <span id="connectionStatus" class="status-badge" style="background:var(--status-new-bg); color:var(--status-new-color);">
+                                <i class="fas fa-spinner fa-spin"></i> Проверка...
+                            </span>
+                            <button class="btn btn-primary btn-sm" onclick="checkConnection()">
+                                <i class="fas fa-sync"></i> Проверить
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Количество записей
+                            <small>Всего клиентов в базе данных</small>
+                        </span>
+                        <div class="value">
+                            <span style="font-weight:700; font-size:18px;" id="totalRecords">0</span>
+                        </div>
+                    </div>
+
+                    <div class="settings-row" style="flex-direction:column; align-items:stretch; gap:8px;">
+                        <span class="label">
+                            Последние данные (JSON)
+                            <small>Сырые данные из хранилища</small>
+                        </span>
+                        <div class="json-preview" id="jsonPreview">Загрузка...</div>
+                    </div>
+                </div>
+
+                <!-- ===== ЭКСПОРТ / ИМПОРТ ===== -->
+                <div class="settings-section">
+                    <h3><i class="fas fa-exchange-alt"></i> Экспорт и импорт</h3>
+                    <div class="desc">Управление данными системы</div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Экспорт всех данных
+                            <small>Выгрузить все записи в JSON файл</small>
+                        </span>
+                        <div class="value">
+                            <button class="btn btn-primary btn-sm" onclick="exportAllData()">
+                                <i class="fas fa-download"></i> Скачать JSON
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Импорт данных
+                            <small>Восстановить данные из JSON файла</small>
+                        </span>
+                        <div class="value">
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+                                <i class="fas fa-upload"></i> Выбрать JSON
+                                <input type="file" id="importJsonFile" accept=".json" style="display:none;" onchange="importJsonData(this)">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== ОПАСНАЯ ЗОНА ===== -->
+                <div class="settings-section danger-zone">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Опасная зона</h3>
+                    <div class="desc">Действия в этой зоне необратимы. Будьте осторожны!</div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Сбросить все настройки
+                            <small>Вернуть настройки к значениям по умолчанию</small>
+                        </span>
+                        <div class="value">
+                            <button class="btn btn-danger btn-sm" onclick="resetSettings()">
+                                <i class="fas fa-undo"></i> Сбросить
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Удалить дубликаты
+                            <small>Найти и удалить записи с одинаковыми названиями и телефонами</small>
+                        </span>
+                        <div class="value">
+                            <button class="btn btn-warning btn-sm" onclick="removeDuplicates()">
+                                <i class="fas fa-filter"></i> Найти и удалить
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <span class="label">
+                            Очистить все данные
+                            <small>Удалить все записи (необратимое действие!)</small>
+                        </span>
+                        <div class="value">
+                            <button class="btn btn-danger btn-sm" onclick="clearAllData()">
+                                <i class="fas fa-trash"></i> Очистить всё
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== ИНФОРМАЦИЯ ===== -->
+                <div class="settings-section">
+                    <h3><i class="fas fa-info-circle"></i> О системе</h3>
+                    <div class="desc">Информация о версии</div>
+
+                    <div class="settings-row">
+                        <span class="label">Версия</span>
+                        <div class="value">
+                            <span style="font-weight:600;">2.0.0</span>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <span class="label">Хранилище</span>
+                        <div class="value">
+                            <span>JSONBin.io <span class="status-badge" style="background:var(--status-deal-bg); color:var(--status-deal-color);">Активно</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TOAST ===== -->
+        <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg">Готово</span></div>
+    </div>
+
+    <!-- ===== СКРИПТЫ ===== -->
+    <script src="js/api.js"></script>
+    <script>
+        // ============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('⚙️ Настройки загружены');
+            
+            // Тема
+            const themeToggle = document.getElementById('themeToggle');
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            if (savedTheme === 'dark') {
+                themeToggle.querySelector('i').className = 'fas fa-sun';
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                const html = document.documentElement;
+                const current = html.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                this.querySelector('i').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            });
+            
+            // Загрузка сохранённых настроек
+            loadSettings();
+            
+            // Проверка подключения
+            setTimeout(checkConnection, 500);
+        });
+
+        // ============================================================
+        // НАСТРОЙКИ (LOCAL STORAGE)
+        // ============================================================
+        
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('crm_settings') || '{}');
+            
+            if (settings.autoTheme) document.getElementById('autoTheme').checked = settings.autoTheme;
+            if (settings.pinFavorites !== undefined) document.getElementById('pinFavorites').checked = settings.pinFavorites;
+            if (settings.showNotes !== undefined) document.getElementById('showNotes').checked = settings.showNotes;
+            if (settings.defaultPerPage) document.getElementById('defaultPerPage').value = settings.defaultPerPage;
+            if (settings.primaryColor) {
+                document.querySelectorAll('.color-dot').forEach(el => {
+                    el.classList.toggle('active', el.dataset.color === settings.primaryColor);
+                });
+                applyColor(settings.primaryColor);
+            }
+            
+            document.querySelectorAll('#autoTheme, #pinFavorites, #showNotes').forEach(el => {
+                el.addEventListener('change', saveSettings);
+            });
+            document.getElementById('defaultPerPage').addEventListener('change', saveSettings);
+        }
+
+        function saveSettings() {
+            const settings = {
+                autoTheme: document.getElementById('autoTheme').checked,
+                pinFavorites: document.getElementById('pinFavorites').checked,
+                showNotes: document.getElementById('showNotes').checked,
+                defaultPerPage: document.getElementById('defaultPerPage').value,
+                primaryColor: document.querySelector('.color-dot.active')?.dataset.color || '#2d3b8f'
+            };
+            localStorage.setItem('crm_settings', JSON.stringify(settings));
+            showToast('Настройки сохранены', 'success');
+        }
+
+        function applyColor(color) {
+            document.documentElement.style.setProperty('--btn-primary', color);
+            localStorage.setItem('crm_primary_color', color);
+        }
+
+        function selectColor(el) {
+            document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+            el.classList.add('active');
+            const color = el.dataset.color;
+            applyColor(color);
+            saveSettings();
+            showToast('Цвет изменён', 'success');
+        }
+
+        const savedColor = localStorage.getItem('crm_primary_color');
+        if (savedColor) {
+            applyColor(savedColor);
+            document.querySelectorAll('.color-dot').forEach(el => {
+                el.classList.toggle('active', el.dataset.color === savedColor);
+            });
+        }
+
+        // ============================================================
+        // ПРОВЕРКА ПОДКЛЮЧЕНИЯ К JSONBIN
+        // ============================================================
+        
+        async function checkConnection() {
+            const statusEl = document.getElementById('connectionStatus');
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Проверка...';
+            statusEl.style.background = 'var(--status-new-bg)';
+            statusEl.style.color = 'var(--status-new-color)';
+            
+            try {
+                const data = await loadFromBin();
+                document.getElementById('totalRecords').textContent = data.length;
+                document.getElementById('jsonPreview').textContent = JSON.stringify(data, null, 2).slice(0, 500) + (data.length > 10 ? '\n... и ещё ' + (data.length - 10) + ' записей' : '');
+                
+                statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Подключено!';
+                statusEl.style.background = 'var(--status-deal-bg)';
+                statusEl.style.color = 'var(--status-deal-color)';
+                showToast('Подключение к JSONBin успешно', 'success');
+            } catch (e) {
+                statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i> Ошибка подключения';
+                statusEl.style.background = 'var(--status-lost-bg)';
+                statusEl.style.color = 'var(--status-lost-color)';
+                showToast('Ошибка подключения к JSONBin', 'error');
+                console.error(e);
+            }
+        }
+
+        // ============================================================
+        // ЭКСПОРТ ВСЕХ ДАННЫХ
+        // ============================================================
+        
+        async function exportAllData() {
+            try {
+                const data = await loadFromBin();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `crm_backup_${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showToast(`Экспортировано ${data.length} записей`, 'success');
+            } catch (e) {
+                showToast('Ошибка экспорта: ' + e.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // ИМПОРТ ИЗ JSON
+        // ============================================================
+        
+        async function importJsonData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) {
+                        showToast('Неверный формат: ожидается массив записей', 'error');
+                        return;
+                    }
+                    
+                    if (!confirm(`Импортировать ${data.length} записей? Это действие добавит их к существующим данным.`)) {
+                        input.value = '';
+                        return;
+                    }
+                    
+                    const existing = await loadFromBin();
+                    let imported = 0;
+                    data.forEach(row => {
+                        const isDuplicate = existing.some(ex => 
+                            ex.name === row.name && 
+                            ex.phone === row.phone &&
+                            ex.phone !== '—'
+                        );
+                        if (!isDuplicate && row.name) {
+                            if (!row.id) row.id = generateId();
+                            if (!row.history) row.history = [{ date: new Date().toLocaleString(), type: 'import', note: 'Импортировано из JSON' }];
+                            existing.push(row);
+                            imported++;
+                        }
+                    });
+                    
+                    await saveToBin(existing);
+                    showToast(`Импортировано ${imported} записей`, 'success');
+                    checkConnection();
+                } catch (e) {
+                    showToast('Ошибка импорта: ' + e.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        // ============================================================
+        // ОЧИСТКА ВСЕХ ДАННЫХ
+        // ============================================================
+        
+        async function clearAllData() {
+            if (!confirm('⚠️ Вы уверены, что хотите удалить ВСЕ данные? Это действие НЕОБРАТИМО!')) return;
+            if (!confirm('Последнее предупреждение: все клиенты будут безвозвратно удалены. Продолжить?')) return;
+            
+            try {
+                await saveToBin([]);
+                showToast('Все данные удалены', 'success');
+                checkConnection();
+            } catch (e) {
+                showToast('Ошибка удаления: ' + e.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // СБРОС НАСТРОЕК
+        // ============================================================
+        
+        function resetSettings() {
+            if (!confirm('Сбросить все настройки к значениям по умолчанию?')) return;
+            
+            localStorage.removeItem('crm_settings');
+            localStorage.removeItem('crm_primary_color');
+            
+            document.getElementById('autoTheme').checked = false;
+            document.getElementById('pinFavorites').checked = true;
+            document.getElementById('showNotes').checked = true;
+            document.getElementById('defaultPerPage').value = '15';
+            
+            document.querySelectorAll('.color-dot').forEach(el => {
+                el.classList.toggle('active', el.dataset.color === '#2d3b8f');
+            });
+            applyColor('#2d3b8f');
+            
+            showToast('Настройки сброшены', 'success');
+        }
+
+        // ============================================================
+        // УДАЛЕНИЕ ДУБЛИКАТОВ
+        // ============================================================
+        
+        async function removeDuplicates() {
+            if (!confirm('Найти и удалить дублирующиеся записи (по названию и телефону)?')) return;
+            
+            try {
+                const data = await loadFromBin();
+                const seen = new Set();
+                const unique = [];
+                let removed = 0;
+                
+                data.forEach(row => {
+                    const key = (row.name + '|' + row.phone).toLowerCase();
+                    if (!seen.has(key) || row.phone === '—') {
+                        seen.add(key);
+                        unique.push(row);
+                    } else {
+                        removed++;
+                    }
+                });
+                
+                await saveToBin(unique);
+                showToast(`Удалено ${removed} дубликатов, осталось ${unique.length} записей`, 'success');
+                checkConnection();
+            } catch (e) {
+                showToast('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        // ============================================================
+        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // ============================================================
+        
+        function generateId() {
+            return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            const icon = toast.querySelector('i');
+            const span = toast.querySelector('span');
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            icon.className = `fas ${icons[type] || icons.success}`;
+            span.textContent = msg;
+            toast.style.display = 'flex';
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => { toast.style.display = 'none'; }, 3000);
+        }
+
+        console.log('⚙️ Настройки готовы');
+    </script>
+</body>
+</html>
