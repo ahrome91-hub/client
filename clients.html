@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>CRM Pro — Клиенты</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- ===== НАВИГАЦИЯ ===== -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <div class="logo-icon"><i class="fas fa-handshake"></i></div>
+                <span>Pro<span>CRM</span></span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html"><i class="fas fa-chart-pie"></i> <span>Дашборд</span></a>
+                <a href="clients.html" class="active"><i class="fas fa-users"></i> <span>Клиенты</span></a>
+                <a href="import.html"><i class="fas fa-file-import"></i> <span>Импорт</span></a>
+                <a href="analytics.html"><i class="fas fa-chart-bar"></i> <span>Аналитика</span></a>
+                <a href="settings.html"><i class="fas fa-cog"></i> <span>Настройки</span></a>
+            </div>
+            <div class="nav-right">
+                <button class="theme-toggle" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <span class="badge">v2.0</span>
+            </div>
+        </nav>
+
+        <!-- ===== ОСНОВНОЙ КОНТЕНТ ===== -->
+        <div class="main">
+            <div class="page-header">
+                <h1><i class="fas fa-users"></i> Клиенты</h1>
+                <p>Управление всеми коммерческими предложениями</p>
+            </div>
+
+            <!-- ===== ФИЛЬТРЫ ===== -->
+            <div class="filters-bar">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, телефону, сайту, заметкам...">
+                <select id="statusFilter">
+                    <option value="all">Все статусы</option>
+                    <option value="new">Новые</option>
+                    <option value="contacted">В работе</option>
+                    <option value="meeting">Встреча</option>
+                    <option value="deal">Сделка</option>
+                    <option value="lost">Потеряно</option>
+                </select>
+                <select id="priorityFilter">
+                    <option value="all">Все приоритеты</option>
+                    <option value="high">🔴 Высокий</option>
+                    <option value="medium">🟡 Средний</option>
+                    <option value="low">🟢 Низкий</option>
+                </select>
+                <select id="categoryFilter">
+                    <option value="all">Все категории</option>
+                </select>
+                <button class="btn btn-primary" onclick="openAddModal()">
+                    <i class="fas fa-plus"></i> Добавить
+                </button>
+            </div>
+
+            <!-- ===== ПАНЕЛЬ ДЕЙСТВИЙ ===== -->
+            <div class="group-actions-bar" style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px;">
+                <div class="group-actions-left" style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+                    <span><i class="far fa-square"></i> <span id="selectedCount">0</span></span>
+                    <select id="groupStatusSelect">
+                        <option value="">Сменить статус</option>
+                        <option value="new">Новое</option>
+                        <option value="contacted">В работе</option>
+                        <option value="meeting">Встреча</option>
+                        <option value="deal">Сделка</option>
+                        <option value="lost">Потеряно</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm" onclick="applyGroupStatus()">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="exportCSV()">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                </div>
+                <div>
+                    <span id="totalInfo" style="color:var(--text-secondary); font-size:14px;">Всего: 0</span>
+                </div>
+            </div>
+
+            <!-- ===== ПЕРЕКЛЮЧАТЕЛЬ ВИДА ===== -->
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                <div class="view-toggle">
+                    <button class="active" data-view="table" onclick="switchView('table')">
+                        <i class="fas fa-table"></i> <span class="hide-mobile">Таблица</span>
+                    </button>
+                    <button data-view="cards" onclick="switchView('cards')">
+                        <i class="fas fa-th-large"></i> <span class="hide-mobile">Карточки</span>
+                    </button>
+                </div>
+                <div style="display:flex; gap:8px; font-size:12px; color:var(--text-secondary);">
+                    <span style="display:flex; align-items:center; gap:4px;"><span style="color:#ef4444;">●</span> Выс.</span>
+                    <span style="display:flex; align-items:center; gap:4px;"><span style="color:#f59e0b;">●</span> Сред.</span>
+                    <span style="display:flex; align-items:center; gap:4px;"><span style="color:#22c55e;">●</span> Низ.</span>
+                </div>
+            </div>
+
+            <!-- ===== ТАБЛИЦА ===== -->
+            <div class="table-wrapper" id="tableView">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="checkbox-col"><input type="checkbox" id="selectAll" onchange="toggleAll(this)"></th>
+                            <th onclick="sortBy('name')">Название <i class="fas fa-sort"></i></th>
+                            <th onclick="sortBy('category')">Категория <i class="fas fa-sort"></i></th>
+                            <th>Телефон</th>
+                            <th>Сайт</th>
+                            <th onclick="sortBy('rating')">Рейтинг <i class="fas fa-sort"></i></th>
+                            <th onclick="sortBy('status')">Статус <i class="fas fa-sort"></i></th>
+                            <th class="notes-cell">Заметки</th>
+                            <th style="text-align:center;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="9"><div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Загрузка...</p></div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ===== КАРТОЧКИ (МОБИЛЬНАЯ ВЕРСИЯ) ===== -->
+            <div class="cards-view" id="cardsView">
+                <div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>Загрузка...</p></div>
+            </div>
+
+            <!-- ===== ПАГИНАЦИЯ ===== -->
+            <div class="pagination">
+                <div class="info">
+                    <span id="pageInfo">1 / 1</span>
+                    <span class="hide-mobile">Показать:</span>
+                    <select id="perPageSelect" class="hide-mobile" onchange="changePerPage()">
+                        <option value="10">10</option>
+                        <option value="15" selected>15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="page-buttons">
+                    <button class="page-btn" onclick="prevPage()"><i class="fas fa-chevron-left"></i></button>
+                    <button class="page-btn" onclick="nextPage()"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== МОДАЛЬНОЕ ОКНО (ДОБАВЛЕНИЕ/РЕДАКТИРОВАНИЕ) ===== -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal">
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+                <h3 id="modalTitle">Новый клиент</h3>
+                <div class="sub" id="modalSub">Заполните данные клиента</div>
+                <input type="hidden" id="editId">
+                
+                <div class="form-group">
+                    <label>Название компании *</label>
+                    <input type="text" id="formName" placeholder="ООО Ромашка">
+                </div>
+                <div class="form-group">
+                    <label>Категория</label>
+                    <input type="text" id="formCategory" placeholder="кафе, ресторан, салон...">
+                </div>
+                <div class="form-group">
+                    <label>Телефон</label>
+                    <input type="text" id="formPhone" placeholder="+7 999 123-45-67">
+                </div>
+                <div class="form-group">
+                    <label>Сайт</label>
+                    <input type="text" id="formWebsite" placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label>Рейтинг</label>
+                    <input type="number" id="formRating" placeholder="4.5" step="0.1" min="0" max="5">
+                </div>
+                <div class="form-group">
+                    <label>Статус</label>
+                    <select id="formStatus">
+                        <option value="new">Новое</option>
+                        <option value="contacted">В работе</option>
+                        <option value="meeting">Встреча</option>
+                        <option value="deal">Сделка</option>
+                        <option value="lost">Потеряно</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <select id="formPriority">
+                        <option value="low">Низкий</option>
+                        <option value="medium" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Заметки</label>
+                    <textarea id="formNotes" placeholder="Заметки по клиенту, история общения..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Адрес</label>
+                    <input type="text" id="formAddress" placeholder="г. Москва, ул. Примерная, д. 1">
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Отмена</button>
+                    <button class="btn btn-primary" onclick="saveClient()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TOAST ===== -->
+        <div class="toast" id="toast"><i class="fas fa-check-circle"></i> <span id="toastMsg">Готово</span></div>
+    </div>
+
+    <!-- ===== СКРИПТЫ ===== -->
+    <script src="js/api.js"></script>
+    <script>
+        // ============================================================
+        // СОСТОЯНИЕ
+        // ============================================================
+        
+        let records = [];
+        let filtered = [];
+        let currentPage = 1;
+        let perPage = 15;
+        let sortField = 'name';
+        let sortAsc = true;
+        let selectedIds = new Set();
+        let searchTerm = '';
+        let statusFilter = 'all';
+        let priorityFilter = 'all';
+        let categoryFilter = 'all';
+        let notesTimers = {};
+        let currentView = 'table';
+
+        // ============================================================
+        // DOM ЭЛЕМЕНТЫ
+        // ============================================================
+        
+        const tbody = document.getElementById('tableBody');
+        const cardsView = document.getElementById('cardsView');
+        const searchInput = document.getElementById('searchInput');
+        const statusFilterEl = document.getElementById('statusFilter');
+        const priorityFilterEl = document.getElementById('priorityFilter');
+        const categoryFilterEl = document.getElementById('categoryFilter');
+        const selectedCount = document.getElementById('selectedCount');
+        const pageInfo = document.getElementById('pageInfo');
+        const totalInfo = document.getElementById('totalInfo');
+        const modalOverlay = document.getElementById('modalOverlay');
+
+        // ============================================================
+        // ТЕМА
+        // ============================================================
+        
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            this.querySelector('i').className = next === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        });
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (savedTheme === 'dark') {
+            document.querySelector('#themeToggle i').className = 'fas fa-sun';
+        }
+
+        // ============================================================
+        // ЗАГРУЗКА ДАННЫХ
+        // ============================================================
+        
+        async function loadData() {
+            try {
+                const data = await loadFromBin();
+                records = data.map(r => ({
+                    ...r,
+                    favorite: r.favorite || false,
+                    priority: r.priority || 'medium',
+                    notes: r.notes || '',
+                    website: r.website || '',
+                    address: r.address || '',
+                    history: r.history || []
+                }));
+                populateCategoryFilter();
+                applyFilters();
+            } catch (e) {
+                console.error('Ошибка загрузки:', e);
+                showToast('Ошибка загрузки данных', 'error');
+            }
+        }
+
+        // ============================================================
+        // ФИЛЬТРЫ
+        // ============================================================
+        
+        function populateCategoryFilter() {
+            const categories = getAllCategories(records);
+            const select = categoryFilterEl;
+            select.innerHTML = '<option value="all">Все категории</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+                select.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const term = searchTerm.toLowerCase().trim();
+            let arr = [...records];
+
+            // Фильтр по статусу
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'contacted') {
+                    arr = arr.filter(r => r.status === 'contacted' || r.status === 'meeting');
+                } else {
+                    arr = arr.filter(r => r.status === statusFilter);
+                }
+            }
+
+            // Фильтр по приоритету
+            if (priorityFilter !== 'all') {
+                arr = arr.filter(r => r.priority === priorityFilter);
+            }
+
+            // Фильтр по категории
+            if (categoryFilter !== 'all') {
+                arr = arr.filter(r => r.category?.toLowerCase() === categoryFilter.toLowerCase());
+            }
+
+            // Поиск
+            if (term) {
+                arr = arr.filter(r =>
+                    r.name?.toLowerCase().includes(term) ||
+                    r.category?.toLowerCase().includes(term) ||
+                    r.phone?.toLowerCase().includes(term) ||
+                    r.website?.toLowerCase().includes(term) ||
+                    r.notes?.toLowerCase().includes(term) ||
+                    r.address?.toLowerCase().includes(term)
+                );
+            }
+
+            // Сортировка
+            arr.sort((a, b) => {
+                let valA = a[sortField] ?? '';
+                let valB = b[sortField] ?? '';
+                if (sortField === 'rating') {
+                    valA = parseFloat(valA) || 0;
+                    valB = parseFloat(valB) || 0;
+                }
+                if (typeof valA === 'string') valA = valA.toLowerCase();
+                if (typeof valB === 'string') valB = valB.toLowerCase();
+                if (valA < valB) return sortAsc ? -1 : 1;
+                if (valA > valB) return sortAsc ? 1 : -1;
+                return 0;
+            });
+
+            filtered = arr;
+            currentPage = 1;
+            renderView();
+            updateTotalInfo();
+        }
+
+        function updateTotalInfo() {
+            totalInfo.textContent = `Всего: ${filtered.length}`;
+        }
+
+        // ============================================================
+        // ОТОБРАЖЕНИЕ
+        // ============================================================
+        
+        function renderView() {
+            if (currentView === 'table') {
+                renderTable();
+            } else {
+                renderCards();
+            }
+            updatePagination();
+            updateSelectedCount();
+        }
+
+        function renderTable() {
+            const start = (currentPage - 1) * perPage;
+            const pageData = filtered.slice(start, start + perPage);
+
+            if (!pageData.length) {
+                tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fas fa-inbox"></i><p>Нет записей</p></div></td></tr>`;
+                return;
+            }
+
+            let html = '';
+            pageData.forEach((r) => {
+                const starClass = r.favorite ? 'active' : '';
+                const checked = selectedIds.has(r.id) ? 'checked' : '';
+                const websiteDisplay = r.website ? 
+                    `<a href="${r.website}" target="_blank" style="color:var(--btn-primary); text-decoration:none;" title="${r.website}"><i class="fas fa-globe"></i></a>` : 
+                    '—';
+                const notesValue = r.notes || '';
+                
+                html += `<tr>
+                    <td class="checkbox-col"><input type="checkbox" class="row-checkbox" data-id="${r.id}" ${checked} onchange="toggleSelect(this)"></td>
+                    <td><span style="font-weight:600;">${r.name || '—'}</span></td>
+                    <td>${r.category || '—'}</td>
+                    <td>${r.phone && r.phone !== '—' ? 
+                        `<a href="tel:${r.phone}" style="color:var(--text-primary); text-decoration:none; display:flex; align-items:center; gap:4px;">
+                            <i class="fas fa-phone" style="color:var(--btn-primary); font-size:11px;"></i> ${r.phone}
+                        </a>` : 
+                        '—'}</td>
+                    <td>${websiteDisplay}</td>
+                    <td>${r.rating || '—'}</td>
+                    <td>
+                        <select class="status-select" onchange="updateStatus('${r.id}', this.value)">
+                            <option value="new" ${r.status === 'new' ? 'selected' : ''}>Новое</option>
+                            <option value="contacted" ${r.status === 'contacted' ? 'selected' : ''}>В работе</option>
+                            <option value="meeting" ${r.status === 'meeting' ? 'selected' : ''}>Встреча</option>
+                            <option value="deal" ${r.status === 'deal' ? 'selected' : ''}>Сделка</option>
+                            <option value="lost" ${r.status === 'lost' ? 'selected' : ''}>Потеряно</option>
+                        </select>
+                    </td>
+                    <td class="notes-cell">
+                        <textarea class="notes-textarea" data-id="${r.id}" placeholder="Заметки..." rows="2">${notesValue}</textarea>
+                    </td>
+                    <td style="text-align:center;">
+                        <button class="action-btn" onclick="editClient('${r.id}')" title="Редактировать"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn star-btn ${starClass}" onclick="toggleFavorite('${r.id}')" title="Избранное"><i class="fas fa-star"></i></button>
+                        <button class="action-btn success" onclick="updateStatus('${r.id}','deal')" title="Сделка"><i class="fas fa-check"></i></button>
+                        <button class="action-btn danger" onclick="deleteClient('${r.id}')" title="Удалить"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+
+            // Автосохранение заметок
+            document.querySelectorAll('.notes-textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    const id = this.dataset.id;
+                    clearTimeout(notesTimers[id]);
+                    notesTimers[id] = setTimeout(() => {
+                        saveNote(id, this.value);
+                    }, 500);
+                });
+                ta.addEventListener('blur', function() {
+                    const id = this.dataset.id;
+                    clearTimeout(notesTimers[id]);
+                    saveNote(id, this.value);
+                });
+            });
+        }
+
+        function renderCards() {
+            const start = (currentPage - 1) * perPage;
+            const pageData = filtered.slice(start, start + perPage);
+
+            if (!pageData.length) {
+                cardsView.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Нет записей</p></div>`;
+                return;
+            }
+
+            let html = '';
+            pageData.forEach((r) => {
+                const starClass = r.favorite ? 'active' : '';
+                const websiteDisplay = r.website ? 
+                    `<a href="${r.website}" target="_blank" style="color:var(--btn-primary); text-decoration:none;">🌐</a>` : 
+                    '—';
+                const notesValue = r.notes || '';
+                const priorityLabel = r.priority === 'high' ? '🔴 Высокий' : r.priority === 'medium' ? '🟡 Средний' : '🟢 Низкий';
+                
+                html += `
+                    <div class="card-item" style="border-left: 4px solid ${r.priority === 'high' ? '#ef4444' : r.priority === 'medium' ? '#f59e0b' : '#22c55e'};">
+                        <div class="card-header">
+                            <span class="card-name">${r.name || '—'} ${r.favorite ? '⭐' : ''}</span>
+                            <select class="status-select" onchange="updateStatus('${r.id}', this.value)">
+                                <option value="new" ${r.status === 'new' ? 'selected' : ''}>Новое</option>
+                                <option value="contacted" ${r.status === 'contacted' ? 'selected' : ''}>В работе</option>
+                                <option value="meeting" ${r.status === 'meeting' ? 'selected' : ''}>Встреча</option>
+                                <option value="deal" ${r.status === 'deal' ? 'selected' : ''}>Сделка</option>
+                                <option value="lost" ${r.status === 'lost' ? 'selected' : ''}>Потеряно</option>
+                            </select>
+                        </div>
+                        <div class="card-details">
+                            <div><span class="label">Категория:</span> ${r.category || '—'}</div>
+                            <div><span class="label">Рейтинг:</span> ${r.rating || '—'}</div>
+                            <div><span class="label">Телефон:</span> ${r.phone && r.phone !== '—' ? `<a href="tel:${r.phone}" style="color:var(--btn-primary);">${r.phone}</a>` : '—'}</div>
+                            <div><span class="label">Сайт:</span> ${websiteDisplay}</div>
+                            <div><span class="label">Приоритет:</span> ${priorityLabel}</div>
+                            ${r.address ? `<div style="grid-column:1/-1;"><span class="label">Адрес:</span> ${r.address}</div>` : ''}
+                        </div>
+                        <div class="card-notes">
+                            <span class="notes-label"><i class="fas fa-sticky-note"></i> Заметки</span>
+                            <textarea class="notes-textarea" data-id="${r.id}" placeholder="Заметки..." rows="2">${notesValue}</textarea>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn" onclick="editClient('${r.id}')"><i class="fas fa-edit"></i> Ред.</button>
+                            <button class="action-btn star-btn ${starClass}" onclick="toggleFavorite('${r.id}')"><i class="fas fa-star"></i></button>
+                            <button class="action-btn success" onclick="updateStatus('${r.id}','deal')"><i class="fas fa-check"></i> Сделка</button>
+                            <button class="action-btn danger" onclick="deleteClient('${r.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            });
+            cardsView.innerHTML = html;
+
+            // Автосохранение заметок в карточках
+            document.querySelectorAll('#cardsView .notes-textarea').forEach(ta => {
+                ta.addEventListener('input', function() {
+                    const id = this.dataset.id;
+                    clearTimeout(notesTimers[id]);
+                    notesTimers[id] = setTimeout(() => {
+                        saveNote(id, this.value);
+                    }, 500);
+                });
+                ta.addEventListener('blur', function() {
+                    const id = this.dataset.id;
+                    clearTimeout(notesTimers[id]);
+                    saveNote(id, this.value);
+                });
+            });
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filtered.length / perPage) || 1;
+            pageInfo.textContent = `${currentPage} / ${totalPages}`;
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                btn.disabled = false;
+            });
+            if (currentPage <= 1) {
+                document.querySelectorAll('.page-btn')[0].disabled = true;
+            }
+            if (currentPage >= totalPages) {
+                document.querySelectorAll('.page-btn')[1].disabled = true;
+            }
+        }
+
+        function updateSelectedCount() {
+            const checked = document.querySelectorAll('.row-checkbox:checked').length;
+            selectedCount.textContent = checked;
+            const all = document.querySelectorAll('.row-checkbox');
+            const selectAll = document.getElementById('selectAll');
+            if (selectAll) {
+                selectAll.checked = checked > 0 && checked === all.length;
+            }
+        }
+
+        // ============================================================
+        // ДЕЙСТВИЯ С ЗАПИСЯМИ
+        // ============================================================
+        
+        function saveNote(id, value) {
+            const rec = records.find(r => r.id == id);
+            if (!rec) return;
+            if (rec.notes !== value) {
+                rec.notes = value;
+                if (!rec.history) rec.history = [];
+                rec.history.push({ date: new Date().toLocaleString(), type: 'note', note: 'Заметка обновлена' });
+                saveToBin(records);
+            }
+        }
+
+        window.updateStatus = function(id, newStatus) {
+            const rec = records.find(r => r.id == id);
+            if (!rec) return;
+            rec.status = newStatus;
+            if (!rec.history) rec.history = [];
+            rec.history.push({ date: new Date().toLocaleString(), type: 'status', note: `Статус изменён на ${getStatusLabel(newStatus)}` });
+            saveToBin(records);
+            showToast(`Статус: ${getStatusLabel(newStatus)}`, 'success');
+            renderView();
+        };
+
+        window.toggleFavorite = function(id) {
+            const rec = records.find(r => r.id == id);
+            if (!rec) return;
+            rec.favorite = !rec.favorite;
+            saveToBin(records);
+            showToast(rec.favorite ? '⭐ В избранном' : '⭐ Удалено из избранного', 'info');
+            renderView();
+        };
+
+        window.deleteClient = function(id) {
+            if (!confirm('Удалить запись?')) return;
+            records = records.filter(r => r.id != id);
+            selectedIds.delete(id);
+            saveToBin(records);
+            showToast('Запись удалена', 'success');
+            renderView();
+            populateCategoryFilter();
+        };
+
+        window.editClient = function(id) {
+            const rec = records.find(r => r.id == id);
+            if (!rec) return;
+            document.getElementById('editId').value = id;
+            document.getElementById('formName').value = rec.name || '';
+            document.getElementById('formCategory').value = rec.category || '';
+            document.getElementById('formPhone').value = rec.phone || '';
+            document.getElementById('formWebsite').value = rec.website || '';
+            document.getElementById('formRating').value = rec.rating || '';
+            document.getElementById('formStatus').value = rec.status || 'new';
+            document.getElementById('formPriority').value = rec.priority || 'medium';
+            document.getElementById('formNotes').value = rec.notes || '';
+            document.getElementById('formAddress').value = rec.address || '';
+            document.getElementById('modalTitle').textContent = 'Редактировать клиента';
+            document.getElementById('modalSub').textContent = 'Измените данные клиента';
+            modalOverlay.style.display = 'flex';
+        };
+
+        window.openAddModal = function() {
+            document.getElementById('editId').value = '';
+            document.getElementById('formName').value = '';
+            document.getElementById('formCategory').value = '';
+            document.getElementById('formPhone').value = '';
+            document.getElementById('formWebsite').value = '';
+            document.getElementById('formRating').value = '';
+            document.getElementById('formStatus').value = 'new';
+            document.getElementById('formPriority').value = 'medium';
+            document.getElementById('formNotes').value = '';
+            document.getElementById('formAddress').value = '';
+            document.getElementById('modalTitle').textContent = 'Новый клиент';
+            document.getElementById('modalSub').textContent = 'Заполните данные клиента';
+            modalOverlay.style.display = 'flex';
+        };
+
+        window.saveClient = function() {
+            const name = document.getElementById('formName').value.trim();
+            if (!name) {
+                showToast('Введите название компании', 'warning');
+                return;
+            }
+
+            const id = document.getElementById('editId').value;
+            const obj = {
+                id: id || generateId(),
+                name: name,
+                category: document.getElementById('formCategory').value.trim() || '—',
+                phone: document.getElementById('formPhone').value.trim() || '—',
+                website: document.getElementById('formWebsite').value.trim() || '',
+                rating: parseFloat(document.getElementById('formRating').value) || 0,
+                status: document.getElementById('formStatus').value,
+                priority: document.getElementById('formPriority').value,
+                notes: document.getElementById('formNotes').value.trim() || '',
+                address: document.getElementById('formAddress').value.trim() || '',
+                favorite: false,
+                history: []
+            };
+
+            if (id) {
+                const idx = records.findIndex(r => r.id == id);
+                if (idx !== -1) {
+                    records[idx] = { ...records[idx], ...obj };
+                    if (!records[idx].history) records[idx].history = [];
+                    records[idx].history.push({ date: new Date().toLocaleString(), type: 'edit', note: 'Запись отредактирована' });
+                }
+            } else {
+                obj.history = [{ date: new Date().toLocaleString(), type: 'create', note: 'Запись создана' }];
+                records.push(obj);
+            }
+
+            saveToBin(records);
+            closeModal();
+            showToast(id ? 'Запись обновлена' : 'Новая запись добавлена', 'success');
+            populateCategoryFilter();
+            renderView();
+        };
+
+        window.closeModal = function() {
+            modalOverlay.style.display = 'none';
+        };
+
+        // Закрытие модалки по клику на оверлей
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ============================================================
+        // ГРУППОВЫЕ ОПЕРАЦИИ
+        // ============================================================
+        
+        window.toggleSelect = function(el) {
+            if (el.checked) {
+                selectedIds.add(el.dataset.id);
+            } else {
+                selectedIds.delete(el.dataset.id);
+            }
+            updateSelectedCount();
+        };
+
+        window.toggleAll = function(el) {
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.checked = el.checked;
+                if (el.checked) {
+                    selectedIds.add(cb.dataset.id);
+                } else {
+                    selectedIds.delete(cb.dataset.id);
+                }
+            });
+            updateSelectedCount();
+        };
+
+        window.applyGroupStatus = function() {
+            const newStatus = document.getElementById('groupStatusSelect').value;
+            if (!newStatus) {
+                showToast('Выберите статус', 'warning');
+                return;
+            }
+            if (selectedIds.size === 0) {
+                showToast('Выберите записи', 'warning');
+                return;
+            }
+            if (!confirm(`Изменить статус на "${getStatusLabel(newStatus)}" для ${selectedIds.size} записей?`)) return;
+
+            records.forEach(r => {
+                if (selectedIds.has(r.id)) {
+                    r.status = newStatus;
+                    if (!r.history) r.history = [];
+                    r.history.push({ date: new Date().toLocaleString(), type: 'status', note: `Групповое изменение статуса на ${getStatusLabel(newStatus)}` });
+                }
+            });
+            saveToBin(records);
+            showToast(`Обновлено ${selectedIds.size} записей`, 'success');
+            selectedIds.clear();
+            renderView();
+        };
+
+        // ============================================================
+        // ЭКСПОРТ CSV
+        // ============================================================
+        
+        window.exportCSV = function() {
+            const dataToExport = selectedIds.size > 0 ? records.filter(r => selectedIds.has(r.id)) : filtered;
+            if (!dataToExport.length) {
+                showToast('Нет данных для экспорта', 'warning');
+                return;
+            }
+
+            const headers = ['id', 'name', 'category', 'phone', 'website', 'rating', 'status', 'priority', 'notes', 'address'];
+            const rows = dataToExport.map(r => headers.map(h => `"${(r[h] || '').toString().replace(/"/g, '""')}"`).join(','));
+            const csv = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `clients_export_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('CSV экспортирован', 'success');
+        };
+
+        // ============================================================
+        // ПАГИНАЦИЯ
+        // ============================================================
+        
+        window.prevPage = function() {
+            if (currentPage > 1) { currentPage--; renderView(); }
+        };
+        
+        window.nextPage = function() {
+            const total = Math.ceil(filtered.length / perPage);
+            if (currentPage < total) { currentPage++; renderView(); }
+        };
+        
+        window.changePerPage = function() {
+            perPage = parseInt(document.getElementById('perPageSelect').value);
+            currentPage = 1;
+            renderView();
+        };
+
+        // ============================================================
+        // СОРТИРОВКА
+        // ============================================================
+        
+        window.sortBy = function(field) {
+            if (sortField === field) {
+                sortAsc = !sortAsc;
+            } else {
+                sortField = field;
+                sortAsc = true;
+            }
+            // Обновляем иконки
+            document.querySelectorAll('thead th i').forEach(icon => {
+                icon.className = 'fas fa-sort';
+            });
+            const th = document.querySelector(`th[onclick*="sortBy('${field}')"]`);
+            if (th) {
+                const icon = th.querySelector('i');
+                icon.className = sortAsc ? 'fas fa-sort-up' : 'fas fa-sort-down';
+            }
+            applyFilters();
+        };
+
+        // ============================================================
+        // ПЕРЕКЛЮЧЕНИЕ ВИДА
+        // ============================================================
+        
+        window.switchView = function(view) {
+            currentView = view;
+            document.querySelectorAll('.view-toggle button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+            document.getElementById('tableView').style.display = view === 'table' ? 'block' : 'none';
+            document.getElementById('cardsView').style.display = view === 'cards' ? 'flex' : 'none';
+            renderView();
+        };
+
+        // ============================================================
+        // СОБЫТИЯ ФИЛЬТРОВ
+        // ============================================================
+        
+        searchInput.addEventListener('input', applyFilters);
+        statusFilterEl.addEventListener('change', applyFilters);
+        priorityFilterEl.addEventListener('change', applyFilters);
+        categoryFilterEl.addEventListener('change', applyFilters);
+
+        // ============================================================
+        // ГОРЯЧИЕ КЛАВИШИ
+        // ============================================================
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+            if (e.ctrlKey && e.key === 'n') { e.preventDefault(); openAddModal(); }
+            if (e.ctrlKey && e.key === 'f') { e.preventDefault(); searchInput.focus(); }
+        });
+
+        // ============================================================
+        // ИНИЦИАЛИЗАЦИЯ
+        // ============================================================
+        
+        loadData();
+
+        console.log('📋 Страница клиентов загружена');
+        console.log('📌 Горячие клавиши: Ctrl+N (новый), Ctrl+F (поиск), Esc (закрыть)');
+    </script>
+</body>
+</html>
